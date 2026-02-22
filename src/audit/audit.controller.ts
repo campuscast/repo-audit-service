@@ -10,6 +10,29 @@ export class AuditController {
     return this.svc.append(body);
   }
 
+  @Post('telemetry')
+  async telemetry(@Body() body: {
+    device_id: string;
+    current_release_id?: string;
+    playback_status?: string;
+    errors?: string[];
+    invalid_signature?: boolean;
+  }) {
+    const eventType = body.invalid_signature ? 'security.signature_invalid' : 'player.telemetry';
+    return this.svc.append({
+      event_type: eventType,
+      actor_type: 'device',
+      actor_id: body.device_id,
+      resource_type: 'release',
+      resource_id: body.current_release_id || 'unknown',
+      action: body.invalid_signature ? 'signature_invalid' : 'telemetry_report',
+      detail: {
+        playback_status: body.playback_status,
+        errors: body.errors || [],
+      },
+    });
+  }
+
   @Get()
   async query(
     @Query('zone_id') zone_id?: string,
